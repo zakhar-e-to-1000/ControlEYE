@@ -26,14 +26,20 @@ def get_video_from_stream(ip, output_path, t):
     #added the ability to input final video time from keyboard
     os.system(f'ffmpeg -use_wallclock_as_timestamps 1 -i "{ip}:81/stream" -t {t} -c copy "{output_path}.mp4"')
 
-def change_quality(ip, qual, waittime):
+def change_quality(ip, qual, waittime, index):
     """
     Sends a signal to change video quality
     """
     time.sleep(waittime)
 
     #pylint says i need to write timeout=10 in case of no response, so i did
-    requests.get(f"{ip}/control?var=framesize&val={qual}", timeout=10)
+    #todo:remove #
+    #requests.get(f"{ip}/control?var=framesize&val={qual}", timeout=10)
+    if index != 0:
+        jobs[0].destroy()
+        jobs.pop(0)
+        job_canvases[0].destroy()
+        job_canvases.pop(0)
 
 def user_input_handling():
     """
@@ -77,9 +83,10 @@ def create_chores():
     _moment = 0
     _i = 0
     for quality in qualities:
-        chore = threading.Thread(target=change_quality, args=(IP, quality, _moment))
+        chore = threading.Thread(target=change_quality, args=(IP, quality, _moment, _i))
         tasks.append(chore)
         _moment += durations[_i]
+        _i += 1
 
 def start_chores():
     """
@@ -89,12 +96,10 @@ def start_chores():
     video_chore = threading.Thread(target=get_video_from_stream, args=(IP, OUTPUT_PATH, sum(durations)))
     for ch in tasks:
         ch.start()
-    video_chore.start()
+    #video_chore.start()
 
 #window initialisations
 app_window = Tk()
-tkinterthread = threading.Thread(target=app_window.mainloop)
-
 app_window.title("ControlEye camera operator")
 app_window.geometry("500x200")
 
@@ -128,13 +133,5 @@ create_job_button.grid(row=4, column=0)
 recording_start_button = Button(second_frame, text="Start recording", command=start_chores)
 recording_start_button["state"] = "disabled"
 recording_start_button.grid(row=0, column=0)
-tkinterthread.start()
+app_window.mainloop()
 #end of window initialisation
-
-while True:
-    _input = input()
-    if _input == "exit":
-        break
-
-
-#get_video_from_stream(IP, OUTPUT_PATH, sum(durations))
