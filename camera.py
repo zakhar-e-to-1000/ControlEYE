@@ -34,6 +34,7 @@ def user_input_handling():
         _input = input()
         if _input == "done":
             break
+        _input = int(_input)
         if _input < 1 or _input > 13:
             print("quality is not in valid range")
             continue
@@ -44,7 +45,7 @@ def user_input_handling():
             print("Please enter a number (in seconds)")
             qualities.pop(-1)
             continue
-        durations.append(_input)
+        durations.append(int(_input))
 
 def create_chores():
     """
@@ -61,13 +62,13 @@ VERSION = "0.0.1"
 print("ControlEye cam operator")
 print(f"Version:{VERSION}")
 
-IP = "http://192.168.19.131"
+IP = "http://192.168.0.101"
 
 #now user inputs multiple video fragments with various quality
 print("Please enter path for video output")
 OUTPUT_PATH = input()
 user_input_handling()
-
+create_chores()
 for ch in tasks:
     ch.start()
 
