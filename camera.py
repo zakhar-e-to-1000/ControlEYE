@@ -8,6 +8,10 @@ from tkinter import *
 from tkinter import messagebox
 import requests
 tasks = []
+#jobs
+jobs = []
+job_canvases = []
+#/jobs
 qualities = []
 durations = []
 OUTPUT_PATH = ""
@@ -27,6 +31,7 @@ def change_quality(ip, qual, waittime):
     Sends a signal to change video quality
     """
     time.sleep(waittime)
+
     #pylint says i need to write timeout=10 in case of no response, so i did
     requests.get(f"{ip}/control?var=framesize&val={qual}", timeout=10)
 
@@ -52,11 +57,18 @@ def user_input_handling():
     except ValueError:
         msg = messagebox.showerror("Error", "Duration must be a number")
         return
+    durations.append(int(_input))
     if STARTBUTTON_EXISTS is False:
-        durations.append(int(_input))
-        recording_start_button = Button(main_frame, text="Start recording", command=start_chores)
-        recording_start_button.pack(side=BOTTOM)
+        recording_start_button["state"] = "active"
         STARTBUTTON_EXISTS = True
+    job = Label(jobs_frame, text=f"Job {len(durations)}: Quality: {qualities[-1]}, Duration: {durations[-1]}")
+    job.grid(row=len(durations), column=0)
+    jobs.append(job)
+    job_canv = Canvas(jobs_frame, width=50, height=10)
+    job_canv.grid(row=len(durations), column=1)
+    job_canvases.append(job_canv)
+    progress_bg = job_canv.create_rectangle(0, 0, 50, 10, fill="black")
+
 
 def create_chores():
     """
@@ -75,36 +87,47 @@ def start_chores():
     """
     create_chores()
     video_chore = threading.Thread(target=get_video_from_stream, args=(IP, OUTPUT_PATH, sum(durations)))
-    video_chore.start()
     for ch in tasks:
         ch.start()
+    video_chore.start()
 
 #window initialisations
 app_window = Tk()
 tkinterthread = threading.Thread(target=app_window.mainloop)
 
 app_window.title("ControlEye camera operator")
-app_window.geometry("600x400")
+app_window.geometry("500x200")
 
-main_frame = Frame(app_window, padx=10, pady=10)
-main_frame.grid(column=0, row=0)
+main_frame = Frame(app_window)
+main_frame.grid(row=0, column=0)
+second_frame = Frame(app_window)
+second_frame.grid(row=0, column=1)
+jobs_frame = Frame(app_window)
+jobs_frame.grid(row=0, column=2)
+
+label_jobs = Label(jobs_frame, text="Jobs:")
+label_jobs.grid(row=0, column=0)
+
 
 label_qual = Label(main_frame, text="Fragment quality")
-label_qual.pack(side=TOP)
-
+label_qual.grid(row=0, column=0)
 quality_textbox_text = StringVar(main_frame)
 quality_textbox = Entry(main_frame, width=10, textvariable=quality_textbox_text)
-quality_textbox.pack(side=TOP)
+quality_textbox.grid(row=1, column=0)
 
 label_dur = Label(main_frame, text="Fragment duration")
-label_dur.pack(side=TOP)
+label_dur.grid(row=2, column=0)
 
 duration_textbox_text = StringVar(main_frame)
 duration_textbox = Entry(main_frame, width=10, textvariable=duration_textbox_text)
-duration_textbox.pack(side=TOP)
+duration_textbox.grid(row=3, column=0)
 
 create_job_button = Button(main_frame, text="Add job", fg="black", padx=20, pady=10, command=user_input_handling)
-create_job_button.pack(side=TOP)
+create_job_button.grid(row=4, column=0)
+
+recording_start_button = Button(second_frame, text="Start recording", command=start_chores)
+recording_start_button["state"] = "disabled"
+recording_start_button.grid(row=0, column=0)
 tkinterthread.start()
 #end of window initialisation
 
